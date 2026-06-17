@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>智能行程助手</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#5b6ef5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="行程助手" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --primary: #5b6ef5;
+      --primary2: #8b5cf6;
+      --bg: #f4f6fb;
+      --card: #fff;
+      --text: #1a1a2e;
+      --sub: #888;
+      --border: #eef0f6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      padding-bottom: 80px;
+    }
+
+    /* ===== 顶部 ===== */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary2) 100%);
+      padding: 14px 16px 10px;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .header-top h1 { font-size: 17px; font-weight: 700; }
+
+    .view-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 2px;
+    }
+
+    .view-toggle button {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .view-toggle button.active {
+      background: #fff;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ===== 自然语言输入框 ===== */
+    .nl-input-wrap {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .nl-input-wrap input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .nl-input-wrap input::placeholder { color: rgba(255,255,255,0.6); }
+
+    .nl-parse-btn {
+      background: rgba(255,255,255,0.25);
+      border: none;
+      color: #fff;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .nl-hint {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 5px;
+      padding-left: 2px;
+    }
+
+    /* ===== 月份导航 ===== */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 6px;
+    }
+
+    .month-nav button {
+      background: var(--card);
+      border: 1px solid var(--border);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .month-title { font-size: 16px; font-weight: 700; color: var(--text); }
+
+    /* ===== 日历 ===== */
+    .calendar-card {
+      background: var(--card);
+      margin: 0 12px 10px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f8f9ff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .weekday {
+      text-align: center;
+      padding: 8px 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sub);
+    }
+
+    .weekday:first-child { color: #ff6b6b; }
+    .weekday:last-child { color: var(--primary); }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .day-cell {
+      min-height: 50px;
+      padding: 5px 3px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .day-cell:nth-child(7n) { border-right: none; }
+    .day-cell.empty { background: #fafafa; cursor: default; }
+    .day-cell.selected { background: #eef0ff; }
+
+    .day-num {
+      font-size: 13px;
+      font-weight: 500;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      border-radius: 50%;
+    }
+
+    .day-cell.today .day-num {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: #fff;
+    }
+
+    .day-cell.selected:not(.today) .day-num {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .day-cell:nth-child(7n+1) .day-num { color: #ff6b6b; }
+    .day-cell:nth-child(7n) .day-num { color: var(--primary); }
+    .day-cell.today .day-num,
+    .day-cell.selected .day-num { color: #fff !important; }
+
+    .event-dots {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-top: 2px;
+      flex-wrap: wrap;
+    }
+
+    .event-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+    }
+
+    /* ===== 周视图 ===== */
+    .week-view {
+      display: none;
+      background: var(--card);
+      margin: 0 12px 10px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .week-view.show { display: block; }
+
+    .week-days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f8f9ff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .week-day-col {
+      text-align: center;
+      padding: 10px 4px;
+      cursor: pointer;
+    }
+
+    .week-day-name {
+      font-size: 11px;
+      color: var(--sub);
+      font-weight: 600;
+    }
+
+    .week-day-num {
+      font-size: 16px;
+      font-weight: 700;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px auto 0;
+      border-radius: 50%;
+    }
+
+    .week-day-col.today .week-day-num {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: #fff;
+    }
+
+    .week-day-col.selected .week-day-num {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .week-events-area {
+      padding: 8px;
+      min-height: 80px;
+    }
+
+    .week-event-chip {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      color: #fff;
+      margin: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ===== 即将到来 ===== */
+    .upcoming-section {
+      margin: 0 12px 10px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sub);
+      margin-bottom: 8px;
+      padding-left: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .upcoming-card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .upcoming-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .upcoming-item:last-child { border-bottom: none; }
+
+    .upcoming-date-box {
+      text-align: center;
+      min-width: 40px;
+    }
+
+    .upcoming-day { font-size: 20px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .upcoming-month { font-size: 10px; color: var(--sub); margin-top: 2px; }
+
+    .upcoming-info { flex: 1; min-width: 0; }
+    .upcoming-title { font-size: 14px; font-weight: 600; }
+    .upcoming-meta { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+    .countdown-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    .countdown-today { background: #fff0f0; color: #ff6b6b; }
+    .countdown-soon { background: #fff8e1; color: #f59e0b; }
+    .countdown-future { background: #f0f4ff; color: var(--primary); }
+
+    /* ===== 选中日期面板 ===== */
+    .day-panel {
+      margin: 0 12px 10px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-date { font-size: 14px; font-weight: 700; }
+    .panel-date span { color: var(--primary); }
+
+    .add-btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    .events-list { padding: 4px 0; min-height: 50px; }
+
+    .no-events {
+      text-align: center;
+      color: #ccc;
+      font-size: 13px;
+      padding: 20px 0;
+    }
+
+    /* 冲突警告 */
+    .conflict-warning {
+      background: #fff3cd;
+      border-left: 3px solid #f59e0b;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #92400e;
+      margin: 0 16px 8px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .event-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .event-item:last-child { border-bottom: none; }
+
+    .event-category-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .event-info { flex: 1; min-width: 0; }
+
+    .event-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .event-title { font-size: 14px; font-weight: 600; }
+
+    .priority-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .priority-high { background: #ffe4e4; color: #e53e3e; }
+    .priority-mid { background: #fff3cd; color: #d97706; }
+    .priority-low { background: #e8f5e9; color: #388e3c; }
+
+    .event-time { font-size: 11px; color: var(--sub); margin-top: 2px; }
+    .event-note { font-size: 11px; color: #aaa; margin-top: 1px; }
+
+    .event-repeat-tag {
+      font-size: 10px;
+      color: var(--primary);
+      background: #eef0ff;
+      padding: 1px 6px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    .event-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .event-delete {
+      background: none;
+      border: none;
+      color: #ddd;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .event-delete:active { color: #ff6b6b; }
+
+    /* ===== 底部统计 ===== */
+    .stats-bar {
+      margin: 0 12px 12px;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 20px; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 10px; color: var(--sub); margin-top: 2px; }
+
+    /* ===== 弹窗 ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 20px 20px 0 0;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      margin: 10px auto 0;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-body { padding: 14px 16px; }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-label {
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 6px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      color: var(--text);
+      background: #fafafa;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus { border-color: var(--primary); background: #fff; }
+
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* 分类选择 */
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .cat-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #fafafa;
+    }
+
+    .cat-option.selected {
+      border-color: var(--primary);
+      background: #eef0ff;
+    }
+
+    .cat-option .cat-icon { font-size: 22px; }
+    .cat-option .cat-name { font-size: 11px; color: var(--sub); margin-top: 4px; font-weight: 500; }
+    .cat-option.selected .cat-name { color: var(--primary); }
+
+    /* 优先级 */
+    .priority-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .pri-option {
+      padding: 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      background: #fafafa;
+      transition: all 0.15s;
+    }
+
+    .pri-option.selected-high { border-color: #e53e3e; background: #ffe4e4; color: #e53e3e; }
+    .pri-option.selected-mid { border-color: #d97706; background: #fff3cd; color: #d97706; }
+    .pri-option.selected-low { border-color: #388e3c; background: #e8f5e9; color: #388e3c; }
+
+    /* 重复 */
+    .repeat-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .repeat-option {
+      padding: 6px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #fafafa;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .repeat-option.selected {
+      border-color: var(--primary);
+      background: #eef0ff;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* 解析结果提示 */
+    .parse-result {
+      background: #eef0ff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--primary);
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .parse-result.show { display: block; }
+
+    .form-actions {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 10px;
+      padding: 0 16px 24px;
+    }
+
+    .btn-cancel {
+      padding: 13px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--sub);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-submit {
+      padding: 13px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: inherit;
+    }
+
+    /* ===== 底部导航 ===== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 8px 0 env(safe-area-inset-bottom, 8px);
+      z-index: 99;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .nav-icon { font-size: 22px; }
+    .nav-label { font-size: 10px; color: var(--sub); font-weight: 500; }
+    .nav-item.active .nav-label { color: var(--primary); font-weight: 700; }
+
+    /* ===== 隐藏/显示 ===== */
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部 -->
+  <div class="header">
+    <div class="header-top">
+      <h1>🗓 智能行程助手</h1>
+      <div class="view-toggle">
+        <button id="btnMonthView" class="active">月</button>
+        <button id="btnWeekView">周</button>
+      </div>
+    </div>
+    <!-- 自然语言输入 -->
+    <div class="nl-input-wrap">
+      <input type="text" id="nlInput" placeholder="试试：明天下午3点开会1小时..." />
+      <button class="nl-parse-btn" id="nlParseBtn">✨ 智能识别</button>
+    </div>
+    <div class="nl-hint">支持：今天/明天/后天/周X + 上午/下午/晚上 + 时间 + 事项</div>
+  </div>
+
+  <!-- 月份导航 -->
+  <div class="month-nav">
+    <button id="prevMonth">‹</button>
+    <div class="month-title" id="monthTitle"></div>
+    <button id="nextMonth">›</button>
+  </div>
+
+  <!-- 月视图 -->
+  <div class="calendar-card" id="monthViewCard">
+    <div class="weekdays">
+      <div class="weekday">日</div><div class="weekday">一</div>
+      <div class="weekday">二</div><div class="weekday">三</div>
+      <div class="weekday">四</div><div class="weekday">五</div>
+      <div class="weekday">六</div>
+    </div>
+    <div class="days-grid" id="daysGrid"></div>
+  </div>
+
+  <!-- 周视图 -->
+  <div class="week-view" id="weekViewCard">
+    <div class="week-days-header" id="weekDaysHeader"></div>
+    <div class="week-events-area" id="weekEventsArea"></div>
+  </div>
+
+  <!-- 即将到来 -->
+  <div class="upcoming-section" id="upcomingSection">
+    <div class="section-title">⏰ 即将到来</div>
+    <div class="upcoming-card" id="upcomingList"></div>
+  </div>
+
+  <!-- 选中日期面板 -->
+  <div class="day-panel">
+    <div class="panel-header">
+      <div class="panel-date" id="panelDate"></div>
+      <button class="add-btn" id="openAddModal">＋ 添加</button>
+    </div>
+    <div id="conflictArea"></div>
+    <div class="events-list" id="eventsList"></div>
+  </div>
+
+  <!-- 统计 -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num" id="statToday">0</div>
+      <div class="stat-label">今日</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statWeek">0</div>
+      <div class="stat-label">本周</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statMonth">0</div>
+      <div class="stat-label">本月</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">全部</div>
+    </div>
+  </div>
+
+  <!-- 添加活动弹窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">添加活动</div>
+      <div class="form-body">
+
+        <!-- 解析结果提示 -->
+        <div class="parse-result" id="parseResult"></div>
+
+        <div class="form-group">
+          <label class="form-label">活动名称 *</label>
+          <input type="text" class="form-input" id="inputTitle" placeholder="活动名称..." maxlength="30" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">日期</label>
+          <input type="date" class="form-input" id="inputDate" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">时间（开始 — 结束）</label>
+          <div class="time-row">
+            <input type="time" class="form-input" id="inputStartTime" />
+            <input type="time" class="form-input" id="inputEndTime" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <div class="category-grid" id="categoryGrid"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">优先级</label>
+          <div class="priority-row">
+            <div class="pri-option" data-pri="high" id="priHigh">🔴 高</div>
+            <div class="pri-option" data-pri="mid" id="priMid">🟡 中</div>
+            <div class="pri-option" data-pri="low" id="priLow">🟢 低</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">重复</label>
+          <div class="repeat-row" id="repeatRow"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">备注 / 地点</label>
+          <input type="text" class="form-input" id="inputNote" placeholder="地点、提醒事项..." maxlength="50" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-cancel" id="cancelModal">取消</button>
+        <button class="btn-submit" id="submitEvent">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 配置 ====================
+    const CATEGORIES = [
+      { id: 'work',    icon: '💼', name: '工作' },
+      { id: 'study',   icon: '📚', name: '学习' },
+      { id: 'life',    icon: '🏠', name: '生活' },
+      { id: 'health',  icon: '🏃', name: '健康' },
+      { id: 'social',  icon: '🎉', name: '社交' },
+      { id: 'other',   icon: '📌', name: '其他' },
+    ];
+
+    const CAT_COLORS = {
+      work: '#5b6ef5', study: '#8b5cf6', life: '#20c997',
+      health: '#ff6b6b', social: '#ffd93d', other: '#aaa'
+    };
+
+    const REPEATS = [
+      { id: 'none', label: '不重复' },
+      { id: 'daily', label: '每天' },
+      { id: 'weekly', label: '每周' },
+      { id: 'monthly', label: '每月' },
+    ];
+
+    // ==================== 状态 ====================
+    let currentYear, currentMonth, selectedDate;
+    let events = JSON.parse(localStorage.getItem('smartCalEvents') || '{}');
+    let selectedCategory = 'work';
+    let selectedPriority = 'mid';
+    let selectedRepeat = 'none';
+    let currentView = 'month'; // month | week
+
+    const today = new Date();
+    const todayStr = fmt(today);
+
+    // ==================== 初始化 ====================
+    function init() {
+      currentYear = today.getFullYear();
+      currentMonth = today.getMonth();
+      selectedDate = todayStr;
+
+      buildCategoryGrid();
+      buildRepeatRow();
+      bindEvents();
+      render();
+    }
+
+    function render() {
+      renderCalendar();
+      renderWeekView();
+      renderEventsList();
+      renderUpcoming();
+      updateStats();
+    }
+
+    // ==================== 绑定事件 ====================
+    function bindEvents() {
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        render();
+      });
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        render();
+      });
+      document.getElementById('openAddModal').addEventListener('click', () => openModal());
+      document.getElementById('cancelModal').addEventListener('click', closeModal);
+      document.getElementById('modalOverlay').addEventListener('click', e => {
+        if (e.target === document.getElementById('modalOverlay')) closeModal();
+      });
+      document.getElementById('submitEvent').addEventListener('click', saveEvent);
+      document.getElementById('nlParseBtn').addEventListener('click', parseNL);
+      document.getElementById('nlInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') parseNL();
+      });
+      document.getElementById('btnMonthView').addEventListener('click', () => switchView('month'));
+      document.getElementById('btnWeekView').addEventListener('click', () => switchView('week'));
+
+      // 优先级
+      ['high','mid','low'].forEach(p => {
+        document.getElementById('pri' + p.charAt(0).toUpperCase() + p.slice(1))
+          .addEventListener('click', () => { selectedPriority = p; updatePriorityUI(); });
+      });
+    }
+
+    // ==================== 视图切换 ====================
+    function switchView(v) {
+      currentView = v;
+      document.getElementById('btnMonthView').classList.toggle('active', v === 'month');
+      document.getElementById('btnWeekView').classList.toggle('active', v === 'week');
+      document.getElementById('monthViewCard').style.display = v === 'month' ? '' : 'none';
+      document.getElementById('weekViewCard').classList.toggle('show', v === 'week');
+      render();
+    }
+
+    // ==================== 月历渲染 ====================
+    function renderCalendar() {
+      const mn = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+      document.getElementById('monthTitle').textContent = `${currentYear}年 ${mn[currentMonth]}`;
+
+      const grid = document.getElementById('daysGrid');
+      grid.innerHTML = '';
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const e = document.createElement('div');
+        e.className = 'day-cell empty';
+        grid.appendChild(e);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const ds = fmt(new Date(currentYear, currentMonth, d));
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        if (ds === todayStr) cell.classList.add('today');
+        if (ds === selectedDate) cell.classList.add('selected');
+
+        const num = document.createElement('div');
+        num.className = 'day-num';
+        num.textContent = d;
+        cell.appendChild(num);
+
+        const dayEvs = getEventsForDate(ds);
+        if (dayEvs.length > 0) {
+          const dots = document.createElement('div');
+          dots.className = 'event-dots';
+          dayEvs.slice(0, 3).forEach(ev => {
+            const dot = document.createElement('div');
+            dot.className = 'event-dot';
+            dot.style.background = CAT_COLORS[ev.category] || '#aaa';
+            dots.appendChild(dot);
+          });
+          cell.appendChild(dots);
+        }
+
+        cell.addEventListener('click', () => {
+          selectedDate = ds;
+          render();
+        });
+        grid.appendChild(cell);
+      }
+    }
+
+    // ==================== 周视图 ====================
+    function renderWeekView() {
+      const header = document.getElementById('weekDaysHeader');
+      const area = document.getElementById('weekEventsArea');
+      header.innerHTML = '';
+      area.innerHTML = '';
+
+      const selD = new Date(selectedDate + 'T00:00:00');
+      const dow = selD.getDay();
+      const weekStart = new Date(selD);
+      weekStart.setDate(selD.getDate() - dow);
+
+      const wn = ['日','一','二','三','四','五','六'];
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const ds = fmt(d);
+
+        const col = document.createElement('div');
+        col.className = 'week-day-col';
+        if (ds === todayStr) col.classList.add('today');
+        if (ds === selectedDate) col.classList.add('selected');
+
+        col.innerHTML = `<div class="week-day-name">${wn[i]}</div>
+          <div class="week-day-num">${d.getDate()}</div>`;
+        col.addEventListener('click', () => { selectedDate = ds; render(); });
+        header.appendChild(col);
+      }
+
+      // 本周所有事件
+      const allWeekEvs = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const ds = fmt(d);
+        getEventsForDate(ds).forEach(ev => allWeekEvs.push({ ...ev, _date: ds }));
+      }
+
+      if (allWeekEvs.length === 0) {
+        area.innerHTML = '<div style="text-align:center;color:#ccc;padding:20px;font-size:13px">本周暂无活动</div>';
+      } else {
+        allWeekEvs.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')).forEach(ev => {
+          const chip = document.createElement('span');
+          chip.className = 'week-event-chip';
+          chip.style.background = CAT_COLORS[ev.category] || '#aaa';
+          const cat = CATEGORIES.find(c => c.id === ev.category);
+          chip.textContent = `${cat ? cat.icon : '📌'} ${ev.title}`;
+          area.appendChild(chip);
+        });
+      }
+    }
+
+    // ==================== 即将到来 ====================
+    function renderUpcoming() {
+      const list = document.getElementById('upcomingList');
+      const section = document.getElementById('upcomingSection');
+
+      const upcoming = [];
+      const now = new Date();
+
+      Object.keys(events).forEach(ds => {
+        const d = new Date(ds + 'T00:00:00');
+        const diff = Math.floor((d - new Date(todayStr + 'T00:00:00')) / 86400000);
+        if (diff >= 0 && diff <= 14) {
+          getEventsForDate(ds).forEach(ev => upcoming.push({ ...ev, _date: ds, _diff: diff }));
+        }
+      });
+
+      upcoming.sort((a, b) => {
+        if (a._diff !== b._diff) return a._diff - b._diff;
+        return (a.startTime || '').localeCompare(b.startTime || '');
+      });
+
+      const top = upcoming.slice(0, 4);
+      if (top.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = '';
+      list.innerHTML = '';
+
+      top.forEach(ev => {
+        const d = new Date(ev._date + 'T00:00:00');
+        const cat = CATEGORIES.find(c => c.id === ev.category);
+        const item = document.createElement('div');
+        item.className = 'upcoming-item';
+
+        let badge = '';
+        if (ev._diff === 0) badge = `<span class="countdown-badge countdown-today">今天</span>`;
+        else if (ev._diff === 1) badge = `<span class="countdown-badge countdown-soon">明天</span>`;
+        else if (ev._diff <= 3) badge = `<span class="countdown-badge countdown-soon">${ev._diff}天后</span>`;
+        else badge = `<span class="countdown-badge countdown-future">${ev._diff}天后</span>`;
+
+        item.innerHTML = `
+          <div class="upcoming-date-box">
+            <div class="upcoming-day">${d.getDate()}</div>
+            <div class="upcoming-month">${d.getMonth()+1}月</div>
+          </div>
+          <div class="upcoming-info">
+            <div class="upcoming-title">${cat ? cat.icon : '📌'} ${ev.title}</div>
+            <div class="upcoming-meta">${ev.startTime ? ev.startTime + (ev.endTime ? ' — ' + ev.endTime : '') : '全天'}${ev.note ? ' · ' + ev.note : ''}</div>
+          </div>
+          ${badge}
+        `;
+        item.addEventListener('click', () => {
+          selectedDate = ev._date;
+          currentYear = d.getFullYear();
+          currentMonth = d.getMonth();
+          render();
+        });
+        list.appendChild(item);
+      });
+    }
+
+    // ==================== 事件列表 ====================
+    function renderEventsList() {
+      const d = new Date(selectedDate + 'T00:00:00');
+      const wn = ['日','一','二','三','四','五','六'];
+      document.getElementById('panelDate').innerHTML =
+        `<span>${d.getMonth()+1}月${d.getDate()}日</span> 周${wn[d.getDay()]}`;
+
+      const list = document.getElementById('eventsList');
+      const conflictArea = document.getElementById('conflictArea');
+      const dayEvs = getEventsForDate(selectedDate).sort((a, b) =>
+        (a.startTime || '99:99').localeCompare(b.startTime || '99:99'));
+
+      // 冲突检测
+      const conflicts = detectConflicts(dayEvs);
+      if (conflicts.length > 0) {
+        conflictArea.innerHTML = `<div class="conflict-warning">⚠️ 时间冲突：${conflicts.join('、')}</div>`;
+      } else {
+        conflictArea.innerHTML = '';
+      }
+
+      if (dayEvs.length === 0) {
+        list.innerHTML = '<div class="no-events">🌸 暂无活动</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      dayEvs.forEach((ev, idx) => {
+        const cat = CATEGORIES.find(c => c.id === ev.category) || CATEGORIES[5];
+        const item = document.createElement('div');
+        item.className = 'event-item';
+
+        const priMap = { high: '高优先', mid: '中优先', low: '低优先' };
+        const priClass = { high: 'priority-high', mid: 'priority-mid', low: 'priority-low' };
+        const repeatMap = { daily: '每天', weekly: '每周', monthly: '每月' };
+
+        item.innerHTML = `
+          <div class="event-category-icon">${cat.icon}</div>
+          <div class="event-info">
+            <div class="event-title-row">
+              <div class="event-title">${ev.title}</div>
+              ${ev.priority && ev.priority !== 'mid' ? `<span class="priority-badge ${priClass[ev.priority]}">${priMap[ev.priority]}</span>` : ''}
+            </div>
+            <div class="event-time">
+              ${ev.startTime ? ev.startTime + (ev.endTime ? ' — ' + ev.endTime : '') : '全天'}
+            </div>
+            ${ev.note ? `<div class="event-note">📍 ${ev.note}</div>` : ''}
+            ${ev.repeat && ev.repeat !== 'none' ? `<span class="event-repeat-tag">🔁 ${repeatMap[ev.repeat]}</span>` : ''}
+          </div>
+          <button class="event-delete" data-date="${selectedDate}" data-idx="${idx}">✕</button>
+        `;
+
+        item.querySelector('.event-delete').addEventListener('click', function() {
+          deleteEvent(this.dataset.date, parseInt(this.dataset.idx));
+        });
+
+        list.appendChild(item);
+      });
+    }
+
+    // ==================== 冲突检测 ====================
+    function detectConflicts(evs) {
+      const conflicts = [];
+      const timed = evs.filter(e => e.startTime && e.endTime);
+      for (let i = 0; i < timed.length; i++) {
+        for (let j = i + 1; j < timed.length; j++) {
+          const a = timed[i], b = timed[j];
+          if (a.startTime < b.endTime && b.startTime < a.endTime) {
+            conflicts.push(`"${a.title}" 与 "${b.title}"`);
+          }
+        }
+      }
+      return conflicts;
+    }
+
+    // ==================== 获取某天事件（含重复） ====================
+    function getEventsForDate(ds) {
+      const result = [];
+      const target = new Date(ds + 'T00:00:00');
+
+      Object.keys(events).forEach(baseDate => {
+        (events[baseDate] || []).forEach(ev => {
+          if (baseDate === ds) {
+            result.push(ev);
+            return;
+          }
+          if (!ev.repeat || ev.repeat === 'none') return;
+          const base = new Date(baseDate + 'T00:00:00');
+          if (target < base) return;
+
+          const diff = Math.round((target - base) / 86400000);
+          if (ev.repeat === 'daily' && diff > 0) { result.push({ ...ev, _repeated: true }); return; }
+          if (ev.repeat === 'weekly' && diff % 7 === 0 && diff > 0) { result.push({ ...ev, _repeated: true }); return; }
+          if (ev.repeat === 'monthly') {
+            const bd = new Date(baseDate + 'T00:00:00');
+            if (target.getDate() === bd.getDate() && diff > 0) { result.push({ ...ev, _repeated: true }); return; }
+          }
+        });
+      });
+
+      return result;
+    }
+
+    // ==================== 自然语言解析 ====================
+    function parseNL() {
+      const text = document.getElementById('nlInput').value.trim();
+      if (!text) return;
+
+      const result = { title: '', date: todayStr, startTime: '', endTime: '', category: 'work' };
+
+      // 日期解析
+      const now = new Date();
+      if (/今天/.test(text)) result.date = fmt(now);
+      else if (/明天/.test(text)) { const d = new Date(now); d.setDate(d.getDate()+1); result.date = fmt(d); }
+      else if (/后天/.test(text)) { const d = new Date(now); d.setDate(d.getDate()+2); result.date = fmt(d); }
+      else if (/大后天/.test(text)) { const d = new Date(now); d.setDate(d.getDate()+3); result.date = fmt(d); }
+      else {
+        const weekMatch = text.match(/周([一二三四五六日天])/);
+        if (weekMatch) {
+          const wMap = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
+          const target = wMap[weekMatch[1]];
+          const d = new Date(now);
+          let diff = target - d.getDay();
+          if (diff <= 0) diff += 7;
+          d.setDate(d.getDate() + diff);
+          result.date = fmt(d);
+        }
+      }
+
+      // 时间解析
+      let hour = -1, minute = 0, duration = 0;
+      const timeMatch = text.match(/([上下早晚]午?|早上|晚上)?(\d{1,2})[点:：](\d{0,2})/);
+      if (timeMatch) {
+        hour = parseInt(timeMatch[2]);
+        minute = parseInt(timeMatch[3] || '0');
+        const period = timeMatch[1] || '';
+        if (/下午|晚|下/.test(period) && hour < 12) hour += 12;
+        if (/上午|早/.test(period) && hour === 12) hour = 0;
+        if (hour < 6 && !/上午|早/.test(period)) hour += 12; // 默认下午
+      }
+
+      // 时长解析
+      const durMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:个)?小时/);
+      if (durMatch) duration = parseFloat(durMatch[1]) * 60;
+      const minMatch = text.match(/(\d+)\s*分钟/);
+      if (minMatch) duration = parseInt(minMatch[1]);
+
+      if (hour >= 0) {
+        result.startTime = `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+        if (duration > 0) {
+          const endMin = hour * 60 + minute + duration;
+          result.endTime = `${String(Math.floor(endMin/60)%24).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}`;
+        }
+      }
+
+      // 分类推断
+      if (/会议|开会|汇报|讨论|评审/.test(text)) result.category = 'work';
+      else if (/学习|上课|培训|考试|作业/.test(text)) result.category = 'study';
+      else if (/运动|健身|跑步|游泳|锻炼/.test(text)) result.category = 'health';
+      else if (/聚餐|聚会|生日|婚礼|派对/.test(text)) result.category = 'social';
+      else if (/买菜|购物|家务|打扫/.test(text)) result.category = 'life';
+
+      // 提取标题（去掉时间词）
+      let title = text
+        .replace(/今天|明天|后天|大后天|周[一二三四五六日天]/g, '')
+        .replace(/[上下早晚]午?|早上|晚上/g, '')
+        .replace(/\d{1,2}[点:：]\d{0,2}/g, '')
+        .replace(/\d+(?:\.\d+)?个?小时/g, '')
+        .replace(/\d+分钟/g, '')
+        .replace(/^\s+|\s+$/g, '')
+        .trim();
+
+      result.title = title || text;
+
+      // 填入表单
+      openModal(result);
+
+      const d = new Date(result.date + 'T00:00:00');
+      const mn = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+      document.getElementById('parseResult').className = 'parse-result show';
+      document.getElementById('parseResult').textContent =
+        `✨ 已识别：${mn[d.getMonth()]}月${d.getDate()}日 ${result.startTime || '全天'} · ${result.title}`;
+
+      document.getElementById('nlInput').value = '';
+    }
+
+    // ==================== 弹窗 ====================
+    function openModal(prefill) {
+      document.getElementById('inputTitle').value = prefill?.title || '';
+      document.getElementById('inputDate').value = prefill?.date || selectedDate;
+      document.getElementById('inputStartTime').value = prefill?.startTime || '';
+      document.getElementById('inputEndTime').value = prefill?.endTime || '';
+      document.getElementById('inputNote').value = '';
+      document.getElementById('parseResult').className = 'parse-result';
+
+      selectedCategory = prefill?.category || 'work';
+      selectedPriority = 'mid';
+      selectedRepeat = 'none';
+
+      updateCategoryUI();
+      updatePriorityUI();
+      updateRepeatUI();
+
+      document.getElementById('modalOverlay').classList.add('show');
+      setTimeout(() => document.getElementById('inputTitle').focus(), 300);
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('show');
+    }
+
+    // ==================== 保存 ====================
+    function saveEvent() {
+      const title = document.getElementById('inputTitle').value.trim();
+      if (!title) {
+        document.getElementById('inputTitle').style.borderColor = '#ff6b6b';
+        document.getElementById('inputTitle').focus();
+        setTimeout(() => document.getElementById('inputTitle').style.borderColor = '', 1500);
+        return;
+      }
+
+      const dateVal = document.getElementById('inputDate').value || selectedDate;
+      const ev = {
+        title,
+        startTime: document.getElementById('inputStartTime').value,
+        endTime: document.getElementById('inputEndTime').value,
+        note: document.getElementById('inputNote').value.trim(),
+        category: selectedCategory,
+        priority: selectedPriority,
+        repeat: selectedRepeat,
+        id: Date.now()
+      };
+
+      if (!events[dateVal]) events[dateVal] = [];
+      events[dateVal].push(ev);
+      save();
+      closeModal();
+      selectedDate = dateVal;
+      const d = new Date(dateVal + 'T00:00:00');
+      currentYear = d.getFullYear();
+      currentMonth = d.getMonth();
+      render();
+    }
+
+    // ==================== 删除 ====================
+    function deleteEvent(dateStr, idx) {
+      if (!confirm('确定删除？')) return;
+      const realEvs = events[dateStr] || [];
+      // 找到第 idx 个非重复事件
+      const dayEvs = getEventsForDate(dateStr);
+      const ev = dayEvs[idx];
+      if (ev._repeated) { alert('重复事件请到原始日期删除'); return; }
+      const realIdx = realEvs.findIndex(e => e.id === ev.id);
+      if (realIdx >= 0) realEvs.splice(realIdx, 1);
+      if (realEvs.length === 0) delete events[dateStr];
+      save();
+      render();
+    }
+
+    // ==================== UI 更新 ====================
+    function buildCategoryGrid() {
+      const grid = document.getElementById('categoryGrid');
+      CATEGORIES.forEach(cat => {
+        const opt = document.createElement('div');
+        opt.className = 'cat-option' + (cat.id === selectedCategory ? ' selected' : '');
+        opt.dataset.id = cat.id;
+        opt.innerHTML = `<span class="cat-icon">${cat.icon}</span><span class="cat-name">${cat.name}</span>`;
+        opt.addEventListener('click', () => { selectedCategory = cat.id; updateCategoryUI(); });
+        grid.appendChild(opt);
+      });
+    }
+
+    function buildRepeatRow() {
+      const row = document.getElementById('repeatRow');
+      REPEATS.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'repeat-option' + (r.id === selectedRepeat ? ' selected' : '');
+        btn.dataset.id = r.id;
+        btn.textContent = r.label;
+        btn.addEventListener('click', () => { selectedRepeat = r.id; updateRepeatUI(); });
+        row.appendChild(btn);
+      });
+    }
+
+    function updateCategoryUI() {
+      document.querySelectorAll('.cat-option').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id === selectedCategory);
+      });
+    }
+
+    function updatePriorityUI() {
+      document.getElementById('priHigh').className = 'pri-option' + (selectedPriority === 'high' ? ' selected-high' : '');
+      document.getElementById('priMid').className = 'pri-option' + (selectedPriority === 'mid' ? ' selected-mid' : '');
+      document.getElementById('priLow').className = 'pri-option' + (selectedPriority === 'low' ? ' selected-low' : '');
+    }
+
+    function updateRepeatUI() {
+      document.querySelectorAll('.repeat-option').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id === selectedRepeat);
+      });
+    }
+
+    // ==================== 统计 ====================
+    function updateStats() {
+      const todayEvs = getEventsForDate(todayStr).length;
+
+      // 本周
+      const dow = today.getDay();
+      let weekEvs = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - dow + i);
+        weekEvs += getEventsForDate(fmt(d)).length;
+      }
+
+      // 本月
+      const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+      let monthEvs = 0;
+      for (let i = 1; i <= daysInMonth; i++) {
+        monthEvs += getEventsForDate(fmt(new Date(today.getFullYear(), today.getMonth(), i))).length;
+      }
+
+      const totalEvs = Object.values(events).reduce((s, a) => s + a.length, 0);
+
+      document.getElementById('statToday').textContent = todayEvs;
+      document.getElementById('statWeek').textContent = weekEvs;
+      document.getElementById('statMonth').textContent = monthEvs;
+      document.getElementById('statTotal').textContent = totalEvs;
+    }
+
+    // ==================== 工具 ====================
+    function fmt(date) {
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    }
+
+    function save() {
+      localStorage.setItem('smartCalEvents', JSON.stringify(events));
+    }
+
+    init();
+
+    // ==================== PWA Service Worker ====================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
