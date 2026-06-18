@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>智能行程助手 · 二维码入口</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,12 +17,8 @@
       padding: 20px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 480px;
-    }
+    .container { width: 100%; max-width: 480px; }
 
-    /* 顶部标题 */
     .hero {
       text-align: center;
       color: #fff;
@@ -34,22 +29,11 @@
       font-size: 56px;
       display: block;
       margin-bottom: 10px;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
     }
 
-    .hero h1 {
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
+    .hero h1 { font-size: 24px; font-weight: 800; letter-spacing: 1px; }
+    .hero p { font-size: 13px; opacity: 0.8; margin-top: 6px; }
 
-    .hero p {
-      font-size: 13px;
-      opacity: 0.8;
-      margin-top: 6px;
-    }
-
-    /* 主卡片 */
     .card {
       background: #fff;
       border-radius: 24px;
@@ -58,10 +42,7 @@
     }
 
     /* 二维码区域 */
-    .qr-section {
-      text-align: center;
-      margin-bottom: 24px;
-    }
+    .qr-section { text-align: center; margin-bottom: 24px; }
 
     .qr-wrap {
       display: inline-block;
@@ -71,43 +52,33 @@
       box-shadow: 0 4px 20px rgba(91,110,245,0.15);
       border: 2px solid #eef0ff;
       position: relative;
+      min-width: 252px;
+      min-height: 252px;
     }
 
-    .qr-wrap canvas {
+    .qr-wrap img {
       display: block;
+      width: 220px;
+      height: 220px;
       border-radius: 8px;
     }
 
-    /* 二维码中心 logo */
-    .qr-logo {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #5b6ef5, #8b5cf6);
-      border-radius: 10px;
+    .qr-placeholder {
+      width: 220px;
+      height: 220px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 2px 8px rgba(91,110,245,0.4);
-      border: 3px solid #fff;
-    }
-
-    .qr-label {
-      margin-top: 12px;
+      color: #ccc;
       font-size: 13px;
-      color: #888;
+      gap: 10px;
     }
 
-    .qr-label strong {
-      color: #5b6ef5;
-      font-weight: 700;
-    }
+    .qr-placeholder .ph-icon { font-size: 48px; }
 
-    /* 状态提示 */
+    .qr-label { margin-top: 12px; font-size: 13px; color: #888; }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -119,15 +90,8 @@
       margin-top: 10px;
     }
 
-    .status-local {
-      background: #fff3cd;
-      color: #d97706;
-    }
-
-    .status-online {
-      background: #d1fae5;
-      color: #065f46;
-    }
+    .status-local { background: #fff3cd; color: #d97706; }
+    .status-online { background: #d1fae5; color: #065f46; }
 
     .status-dot {
       width: 7px;
@@ -142,7 +106,6 @@
       50% { opacity: 0.3; }
     }
 
-    /* 分割线 */
     .divider {
       display: flex;
       align-items: center;
@@ -159,7 +122,6 @@
       background: #eee;
     }
 
-    /* URL 输入区 */
     .url-section label {
       font-size: 13px;
       font-weight: 700;
@@ -168,10 +130,7 @@
       margin-bottom: 8px;
     }
 
-    .url-input-row {
-      display: flex;
-      gap: 8px;
-    }
+    .url-input-row { display: flex; gap: 8px; }
 
     .url-input {
       flex: 1;
@@ -188,7 +147,7 @@
     .url-input:focus { border-color: #5b6ef5; }
 
     .gen-btn {
-      padding: 11px 16px;
+      padding: 11px 18px;
       background: linear-gradient(135deg, #5b6ef5, #8b5cf6);
       color: #fff;
       border: none;
@@ -202,26 +161,31 @@
 
     .gen-btn:active { opacity: 0.85; }
 
-    /* 部署指引 */
-    .deploy-section {
-      margin-top: 20px;
+    /* 错误提示 */
+    .error-tip {
+      display: none;
+      background: #fff0f0;
+      border-left: 3px solid #ff6b6b;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #c53030;
+      border-radius: 0 8px 8px 0;
+      margin-top: 8px;
     }
+
+    .error-tip.show { display: block; }
+
+    /* 部署指引 */
+    .deploy-section { margin-top: 20px; }
 
     .deploy-title {
       font-size: 13px;
       font-weight: 700;
       color: #333;
       margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
 
-    .deploy-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .deploy-steps { display: flex; flex-direction: column; gap: 8px; }
 
     .deploy-step {
       display: flex;
@@ -248,18 +212,8 @@
       margin-top: 1px;
     }
 
-    .step-text {
-      font-size: 12px;
-      color: #555;
-      line-height: 1.5;
-    }
-
-    .step-text a {
-      color: #5b6ef5;
-      font-weight: 600;
-      text-decoration: none;
-    }
-
+    .step-text { font-size: 12px; color: #555; line-height: 1.6; }
+    .step-text a { color: #5b6ef5; font-weight: 600; text-decoration: none; }
     .step-text code {
       background: #eef0ff;
       color: #5b6ef5;
@@ -268,7 +222,6 @@
       font-size: 11px;
     }
 
-    /* 下载按钮 */
     .action-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -296,15 +249,48 @@
       color: #fff;
     }
 
+    .btn-download:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
     .btn-open {
       background: #f0f4ff;
       color: #5b6ef5;
       border: 1.5px solid #dde3ff;
     }
 
-    .btn-open:active, .btn-download:active { opacity: 0.85; }
+    /* URL 提示 */
+    .url-tip {
+      margin-top: 10px;
+      background: #f8f9ff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-    /* 底部提示 */
+    .url-tip-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .tip-icon { flex-shrink: 0; font-size: 13px; }
+
+    .url-tip code {
+      background: #eef0ff;
+      color: #5b6ef5;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11px;
+      word-break: break-all;
+    }
+
     .footer-tip {
       text-align: center;
       font-size: 11px;
@@ -316,45 +302,53 @@
 <body>
 
   <div class="container">
-    <!-- 顶部标题 -->
     <div class="hero">
       <span class="app-icon">🗓</span>
       <h1>智能行程助手</h1>
       <p>扫描二维码，随时随地管理你的行程</p>
     </div>
 
-    <!-- 主卡片 -->
     <div class="card">
 
-      <!-- 二维码展示 -->
       <div class="qr-section">
-        <div class="qr-wrap">
-          <canvas id="qrCanvas"></canvas>
-          <div class="qr-logo">🗓</div>
+        <div class="qr-wrap" id="qrWrap">
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <span class="ph-icon">📱</span>
+            <span>输入网址后点击「生成」</span>
+          </div>
+          <img id="qrImg" style="display:none" alt="二维码" />
         </div>
-        <div class="qr-label">手机扫码 · 立即使用</div>
+        <div class="qr-label" id="qrLabel">请输入部署网址生成二维码</div>
         <div>
           <span class="status-badge" id="statusBadge">
             <span class="status-dot"></span>
-            <span id="statusText">检测中...</span>
+            <span id="statusText">检测环境中...</span>
           </span>
         </div>
       </div>
 
-      <!-- 分割线 -->
-      <div class="divider">自定义网址</div>
+      <div class="divider">输入网址生成二维码</div>
 
-      <!-- URL 输入 -->
       <div class="url-section">
-        <label>🔗 输入你的部署网址，生成专属二维码</label>
+        <label>🔗 输入 GitHub Pages 网址（注意不是 github.com）</label>
         <div class="url-input-row">
           <input type="url" class="url-input" id="urlInput"
-            placeholder="https://你的用户名.github.io/calendar-app" />
+            placeholder="https://你的用户名.github.io/仓库名" />
           <button class="gen-btn" id="genBtn">生成</button>
+        </div>
+        <div class="error-tip" id="errorTip"></div>
+        <div class="url-tip">
+          <div class="url-tip-row">
+            <span class="tip-icon">❌</span>
+            <span>错误：<code>https://github.com/用户名</code>（这是 GitHub 主页）</span>
+          </div>
+          <div class="url-tip-row">
+            <span class="tip-icon">✅</span>
+            <span>正确：<code>https://用户名.github.io/仓库名</code>（这是 Pages 地址）</span>
+          </div>
         </div>
       </div>
 
-      <!-- 部署指引 -->
       <div class="deploy-section">
         <div class="deploy-title">🚀 免费部署教程（3步上线）</div>
         <div class="deploy-steps">
@@ -368,131 +362,143 @@
           <div class="deploy-step">
             <div class="step-num">2</div>
             <div class="step-text">
-              进入仓库 → <code>Settings</code> → <code>Pages</code> → Source 选 <code>main</code> 分支 → 保存
+              进入仓库 → <code>Settings</code> → <code>Pages</code> → Source 选 <code>main</code> 分支 → 保存，等待约1分钟
             </div>
           </div>
           <div class="deploy-step">
             <div class="step-num">3</div>
             <div class="step-text">
-              得到网址 <code>https://用户名.github.io/仓库名</code>，粘贴到上方输入框，点击「生成」即可得到二维码
+              得到网址 <code>https://用户名.github.io/仓库名</code>，粘贴到上方输入框，点击「生成」
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 操作按钮 -->
       <div class="action-row">
-        <button class="action-btn btn-download" id="downloadBtn">⬇ 下载二维码</button>
+        <button class="action-btn btn-download" id="downloadBtn" disabled>⬇ 下载二维码</button>
         <button class="action-btn btn-open" id="openAppBtn">📱 直接打开</button>
       </div>
 
     </div>
 
-    <div class="footer-tip">部署后手机扫码可添加到桌面，像 App 一样使用</div>
+    <div class="footer-tip">部署后手机扫码，可添加到桌面像 App 一样使用</div>
   </div>
 
   <script>
-    let currentUrl = '';
-    let qrGenerated = false;
+    let currentQrUrl = '';
 
-    // 检测当前环境
+    // ===== 检测环境 =====
     function detectEnv() {
-      const url = window.location.href;
+      const href = window.location.href;
       const badge = document.getElementById('statusBadge');
       const statusText = document.getElementById('statusText');
 
-      if (url.startsWith('file://')) {
+      if (href.startsWith('file://')) {
         badge.className = 'status-badge status-local';
-        statusText.textContent = '本地文件 · 需部署后扫码';
-        return null;
+        statusText.textContent = '本地文件 · 需部署后才能扫码';
       } else {
         badge.className = 'status-badge status-online';
-        statusText.textContent = '已上线 · 可直接扫码';
-        // 返回 index.html 的 URL
-        return url.replace('qr.html', 'index.html');
-      }
-    }
-
-    // 生成二维码
-    function generateQR(url) {
-      if (!url) return;
-      currentUrl = url;
-
-      const canvas = document.getElementById('qrCanvas');
-      QRCode.toCanvas(canvas, url, {
-        width: 220,
-        margin: 1,
-        color: {
-          dark: '#1a1a2e',
-          light: '#ffffff'
-        },
-        errorCorrectionLevel: 'H'
-      }, function(err) {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        qrGenerated = true;
-
-        // 在二维码中心绘制 logo 背景（白色圆角矩形）
-        const ctx = canvas.getContext('2d');
-        const size = 50;
-        const x = (canvas.width - size) / 2;
-        const y = (canvas.height - size) / 2;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.roundRect(x - 3, y - 3, size + 6, size + 6, 8);
-        ctx.fill();
-      });
-    }
-
-    // 下载二维码
-    function downloadQR() {
-      if (!qrGenerated) {
-        alert('请先生成二维码');
-        return;
-      }
-      const canvas = document.getElementById('qrCanvas');
-      const link = document.createElement('a');
-      link.download = '智能行程助手-二维码.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    }
-
-    // 初始化
-    window.addEventListener('load', () => {
-      const appUrl = detectEnv();
-
-      if (appUrl) {
-        // 已部署，直接生成当前 URL 的二维码
+        statusText.textContent = '已上线 · 可直接扫码使用';
+        // 自动填入并生成
+        const appUrl = href.replace(/qr\.html.*$/, 'index.html');
         document.getElementById('urlInput').value = appUrl;
         generateQR(appUrl);
-      } else {
-        // 本地文件，生成示例二维码（提示用户部署）
-        const demoUrl = 'https://your-name.github.io/calendar-app/index.html';
-        generateQR(demoUrl);
+      }
+    }
+
+    // ===== 生成二维码（使用 qrserver.com API）=====
+    function generateQR(url) {
+      if (!url || !url.startsWith('http')) {
+        showError('请输入以 https:// 开头的完整网址');
+        return;
       }
 
-      // 生成按钮
+      hideError();
+
+      const encoded = encodeURIComponent(url);
+      // 使用 qrserver.com 免费 API 生成二维码图片
+      const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&ecc=H&data=${encoded}`;
+
+      const img = document.getElementById('qrImg');
+      const placeholder = document.getElementById('qrPlaceholder');
+      const label = document.getElementById('qrLabel');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      // 显示加载状态
+      placeholder.innerHTML = '<span class="ph-icon">⏳</span><span>生成中...</span>';
+      placeholder.style.display = 'flex';
+      img.style.display = 'none';
+      downloadBtn.disabled = true;
+
+      img.onload = function() {
+        placeholder.style.display = 'none';
+        img.style.display = 'block';
+        label.textContent = '手机扫码 · 立即使用';
+        currentQrUrl = apiUrl;
+        downloadBtn.disabled = false;
+      };
+
+      img.onerror = function() {
+        placeholder.innerHTML = '<span class="ph-icon">❌</span><span>生成失败，请检查网络连接</span>';
+        placeholder.style.display = 'flex';
+        img.style.display = 'none';
+        showError('二维码生成失败，请确保网络正常（需要访问 qrserver.com）');
+      };
+
+      img.src = apiUrl;
+    }
+
+    // ===== 下载二维码 =====
+    function downloadQR() {
+      if (!currentQrUrl) return;
+
+      // 通过 fetch 下载图片再保存
+      fetch(currentQrUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = '智能行程助手-二维码.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        })
+        .catch(() => {
+          // 降级：直接在新标签打开
+          window.open(currentQrUrl, '_blank');
+        });
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorTip');
+      el.textContent = '⚠️ ' + msg;
+      el.classList.add('show');
+    }
+
+    function hideError() {
+      document.getElementById('errorTip').classList.remove('show');
+    }
+
+    // ===== 初始化 =====
+    window.addEventListener('load', () => {
+      detectEnv();
+
       document.getElementById('genBtn').addEventListener('click', () => {
         const val = document.getElementById('urlInput').value.trim();
         if (!val) {
-          document.getElementById('urlInput').style.borderColor = '#ff6b6b';
-          setTimeout(() => document.getElementById('urlInput').style.borderColor = '', 1500);
+          showError('请先输入网址');
+          document.getElementById('urlInput').focus();
           return;
         }
         generateQR(val);
       });
 
-      // 回车生成
       document.getElementById('urlInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') document.getElementById('genBtn').click();
       });
 
-      // 下载
       document.getElementById('downloadBtn').addEventListener('click', downloadQR);
 
-      // 打开 App
       document.getElementById('openAppBtn').addEventListener('click', () => {
         window.open('index.html', '_blank');
       });
