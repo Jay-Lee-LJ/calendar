@@ -713,6 +713,71 @@
     .nav-label { font-size: 10px; color: var(--sub); font-weight: 500; }
     .nav-item.active .nav-label { color: var(--primary); font-weight: 700; }
 
+    /* 提醒选项 */
+    .remind-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .remind-option {
+      padding: 6px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #fafafa;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .remind-option.selected {
+      border-color: #ff6b6b;
+      background: #fff0f0;
+      color: #e53e3e;
+      font-weight: 600;
+    }
+
+    /* 提醒标签 */
+    .event-remind-tag {
+      font-size: 10px;
+      color: #e53e3e;
+      background: #fff0f0;
+      padding: 1px 6px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    /* 通知权限提示 */
+    .notif-banner {
+      background: #fff8e1;
+      border-left: 3px solid #f59e0b;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #92400e;
+      margin: 0 12px 10px;
+      border-radius: 0 12px 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .notif-allow-btn {
+      background: #f59e0b;
+      color: #fff;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
     /* ===== 隐藏/显示 ===== */
     .page { display: none; }
     .page.active { display: block; }
@@ -735,6 +800,12 @@
       <button class="nl-parse-btn" id="nlParseBtn">✨ 智能识别</button>
     </div>
     <div class="nl-hint">支持：今天/明天/后天/周X + 上午/下午/晚上 + 时间 + 事项</div>
+  </div>
+
+  <!-- 通知权限提示横幅 -->
+  <div class="notif-banner" id="notifBanner" style="display:none">
+    <span>🔔 开启通知权限，活动开始前自动提醒你</span>
+    <button class="notif-allow-btn" id="notifAllowBtn">开启提醒</button>
   </div>
 
   <!-- 月份导航 -->
@@ -842,6 +913,11 @@
         <div class="form-group">
           <label class="form-label">重复</label>
           <div class="repeat-row" id="repeatRow"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🔔 提醒</label>
+          <div class="remind-row" id="remindRow"></div>
         </div>
 
         <div class="form-group">
@@ -1452,6 +1528,142 @@
     function save() {
       localStorage.setItem('smartCalEvents', JSON.stringify(events));
     }
+
+    // ==================== 提醒配置 ====================
+    const REMINDS = [
+      { id: 'none',  label: '不提醒' },
+      { id: '0',     label: '准时' },
+      { id: '5',     label: '提前5分钟' },
+      { id: '15',    label: '提前15分钟' },
+      { id: '30',    label: '提前30分钟' },
+      { id: '60',    label: '提前1小时' },
+    ];
+
+    let selectedRemind = 'none';
+    const firedKey = 'smartCalFired';
+    let firedSet = new Set(JSON.parse(localStorage.getItem(firedKey) || '[]'));
+
+    // 构建提醒选项
+    function buildRemindRow() {
+      const row = document.getElementById('remindRow');
+      REMINDS.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'remind-option' + (r.id === selectedRemind ? ' selected' : '');
+        btn.dataset.id = r.id;
+        btn.textContent = r.label;
+        btn.addEventListener('click', () => { selectedRemind = r.id; updateRemindUI(); });
+        row.appendChild(btn);
+      });
+    }
+
+    function updateRemindUI() {
+      document.querySelectorAll('.remind-option').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id === selectedRemind);
+      });
+    }
+
+    // ==================== 通知权限 ====================
+    function initNotification() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        document.getElementById('notifBanner').style.display = 'flex';
+        document.getElementById('notifAllowBtn').addEventListener('click', () => {
+          Notification.requestPermission().then(p => {
+            document.getElementById('notifBanner').style.display = 'none';
+            if (p === 'granted') startReminderTimer();
+          });
+        });
+      } else if (Notification.permission === 'granted') {
+        startReminderTimer();
+      }
+    }
+
+    // ==================== 提醒定时器（每分钟检查一次）====================
+    function startReminderTimer() {
+      checkReminders();
+      setInterval(checkReminders, 60000);
+    }
+
+    function checkReminders() {
+      if (Notification.permission !== 'granted') return;
+      const now = new Date();
+      const ds = fmt(now);
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+
+      getEventsForDate(ds).forEach(ev => {
+        if (!ev.startTime || !ev.remind || ev.remind === 'none') return;
+
+        const [h, m] = ev.startTime.split(':').map(Number);
+        const evMin = h * 60 + m;
+        const remindMin = evMin - parseInt(ev.remind || '0');
+        const fireKey = `${ev.id || ev.title}_${ds}_${ev.remind}`;
+
+        // 在提醒时间点（允许1分钟误差）
+        if (nowMin >= remindMin && nowMin <= remindMin + 1 && !firedSet.has(fireKey)) {
+          firedSet.add(fireKey);
+          localStorage.setItem(firedKey, JSON.stringify([...firedSet]));
+
+          const remindLabel = REMINDS.find(r => r.id === ev.remind)?.label || '';
+          const body = ev.remind === '0'
+            ? `活动现在开始${ev.note ? ' · ' + ev.note : ''}`
+            : `${remindLabel}后开始 · ${ev.startTime}${ev.note ? ' · ' + ev.note : ''}`;
+
+          new Notification(`🔔 ${ev.title}`, {
+            body,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%235b6ef5"/><text y=".9em" font-size="80" x="10">🗓</text></svg>',
+            tag: fireKey,
+            requireInteraction: false,
+          });
+        }
+      });
+    }
+
+    // ==================== 修改 openModal 加入 remind ====================
+    const _origOpenModal = openModal;
+    openModal = function(prefill) {
+      _origOpenModal(prefill);
+      selectedRemind = prefill?.remind || 'none';
+      updateRemindUI();
+    };
+
+    // ==================== 修改 saveEvent 加入 remind ====================
+    const _origSaveEvent = saveEvent;
+    saveEvent = function() {
+      // 在原 saveEvent 前注入 remind 字段
+      const _origSave = save;
+      save = function() {
+        // 找到刚添加的事件，补充 remind 字段
+        const dateVal = document.getElementById('inputDate').value || selectedDate;
+        const arr = events[dateVal];
+        if (arr && arr.length > 0) arr[arr.length - 1].remind = selectedRemind;
+        localStorage.setItem('smartCalEvents', JSON.stringify(events));
+        save = _origSave;
+      };
+      _origSaveEvent();
+    };
+
+    // ==================== 修改 renderEventsList 显示提醒标签 ====================
+    const _origRenderEventsList = renderEventsList;
+    renderEventsList = function() {
+      _origRenderEventsList();
+      // 补充提醒标签
+      const dayEvs = getEventsForDate(selectedDate);
+      document.querySelectorAll('.event-item').forEach((item, idx) => {
+        const ev = dayEvs[idx];
+        if (!ev || !ev.remind || ev.remind === 'none') return;
+        const label = REMINDS.find(r => r.id === ev.remind)?.label || '';
+        const info = item.querySelector('.event-info');
+        if (info && !info.querySelector('.event-remind-tag')) {
+          const tag = document.createElement('span');
+          tag.className = 'event-remind-tag';
+          tag.textContent = '🔔 ' + label;
+          info.appendChild(tag);
+        }
+      });
+    };
+
+    buildRemindRow();
+    initNotification();
 
     init();
 
